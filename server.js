@@ -2,11 +2,15 @@ const exp=require("express");
 const mongoClient=require("mongodb").MongoClient;
 const path=require("path")
 const app=exp()
-const cors = require('cors')
-app.use(cors({
-    origin: ["https://crud-practice-app.onrender.com"]
+
+
+
+const corsOptions ={
+    origin:["http://localhost:3000","https://crud-practice-app.onrender.com"], 
+    credentials:true,            //access-control-allow-credentials:true
+    optionSuccessStatus:200
 }
-))
+app.use(cors(corsOptions));
 //connecting react build with express server
 //app.use(exp.static(path.join(__dirname, "./build")));
 app.get("/", (req, res) => {
