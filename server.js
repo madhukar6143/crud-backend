@@ -4,7 +4,7 @@ const path=require("path")
 const app=exp()
 const cors = require('cors')
 app.use(cors({
-    origin: ["http://localhost:3000", "https://mern-task-app.onrender.com"]
+    origin: ["https://crud-practice-app.onrender.com"]
 }
 ))
 //connecting react build with express server
