@@ -3,8 +3,7 @@ const mongoClient=require("mongodb").MongoClient;
 const path=require("path")
 const app=exp()
 
-
-
+const cors = require('cors')
 const corsOptions ={
     origin:["http://localhost:3000","https://crud-practice-app.onrender.com"], 
     credentials:true,            //access-control-allow-credentials:true
