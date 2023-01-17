@@ -1,84 +1,98 @@
 const exp = require("express");
 const userApp = exp.Router();
-const  ObjectId = require('mongodb').ObjectId;
+const mongoClient = require("mongodb").MongoClient;
+require('dotenv').config();
+const dbConnectionString = process.env.DATABASEURL
+let userCollectionObject;
+let dataCollectionObject;
+
+
+mongoClient.connect(dbConnectionString)
+  .then(client => {
+    //create DB object
+    const dbObj = client.db("portfolio");
+    //get collection object
+    
+    dataCollectionObject = dbObj.collection("messageData")
+    //share userCollectionObj
+    console.log("Connected to messageDB ")
+  })
+  .catch(err => console.log("err in connecting to DB ", err))
+
+
+
+  mongoClient.connect(dbConnectionString)
+  .then(client => {
+    //create DB object
+    const dbObj = client.db("portfolio");
+    //get collection object
+    
+    userCollectionObject = dbObj.collection("track")
+    //share userCollectionObj
+    console.log("Connected to dataDB ")
+  })
+  .catch(err => console.log("err in connecting to DB ", err))
 
 
 //middleware to parse  body of req
 userApp.use(exp.json());
 
-//define routes
-//route for GET req for all users
-userApp.get("/get-users", async (request, response) => {
-  //get usercollectionobj
-  let userCollectionObject = request.app.get("userCollectionObject");
-  //get data
-  let users = await userCollectionObject.find().toArray();
-  //send res
-  response.send({ message: "users data", payload: users });
-});
-
-
 
 //route for POST req
 userApp.post("/create-user", async (request, response) => {
   //get usercollectionobj
-  let userCollectionObject = request.app.get("userCollectionObject");
   //get userObj from client
-  let userObj = request.body;
+  let userObj = await request.body;
 
   //verify existing user
-  let userOfDB = await userCollectionObject.findOne({
+  let userOfDB = await dataCollectionObject.findOne({
     username: userObj.username,
   });
 
-  
+
   //if user existed
   if (userOfDB !== null) {
     response.send({ message: "Duplicate Data" });
   }
   //if user not existed
   else {
-    await userCollectionObject.insertOne(userObj);
-    //send res
-    response.send({ message: "Post Request Successful" });
+    await dataCollectionObject.insertOne(userObj);
+    response.send({ message: "Message Sent" });
   }
 });
 
-//route for PUT req
-userApp.put("/update-user", async (request, response) => {
-  //get usercollectionobj
-  let userCollectionObject = request.app.get("userCollectionObject");
+
+
+
+
+userApp.post("/track", async (request, response) => {
+
   //get userObj from client
-  let userObj = request.body;
-  //update user by id
-  let res= await userCollectionObject.updateOne(
-    { username: userObj.username },
-    { $set: { ...userObj } }
-  );
-  
-  //send res
-  if(res.modifiedCount===1)
-  response.send({ message: "Put Request Successful" });
-  else
-  response.send({message:"put request failed"});
+  let userObj = await request.body;
+
+  //verify existing date
+  let userOfDB = await userCollectionObject.findOne({
+    currentDate: userObj.currentDate
+  });
+
+  //if date existed update
+  if (userOfDB !== null) {
+
+    console.log(userObj)
+    userObj = { ...userObj, count: userOfDB.count + 1 }
+    console.log(userObj)
+    let res = await userCollectionObject.updateOne(
+      { currentDate: userObj.currentDate },
+      { $set: { ...userObj } }
+    );
+  }
+  //if user not existed add new
+  else {
+    await userCollectionObject.insertOne(userObj);
+    //send res
+  }
 });
 
-//route for DELETE req
-userApp.delete("/remove-user/:id", async (request, response) => {
-  //get usercollectionobj
-  
-  let userCollectionObject = request.app.get("userCollectionObject");
-  //get url param
-  
-  let userId = request.params.id;
-  //delete user
-  let res =await userCollectionObject.deleteOne( {"_id": ObjectId(userId)});
-  //send res
-  if(res.deletedCount===1)
-  response.send({ message: "Data deleted" });
-  else
-  response.send({message:"deletion unsuccessful"})
-});
 
 //export userApp
 module.exports = userApp;
